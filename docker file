@@ -1,17 +1,29 @@
-FROM python:3.11-slim as builder
-WORKDIR /app
-RUN apt-get update && apt-get install -y --no-install-recommends build-essential libgomp1 && rm -rf /var/lib/apt/lists/*
-COPY requirements.txt .
-RUN pip install --no-cache-dir --user -r requirements.txt
+# ---------- Builder stage ----------
+FROM python:3.10-slim AS builder
 
-FROM python:3.11-slim as runtime
 WORKDIR /app
-RUN apt-get update && apt-get install -y --no-install-recommends libgomp1 && rm -rf /var/lib/apt/lists/*
-COPY --from=builder /root/.local /root/.local
-COPY . /app
-ENV PATH=/root/.local/bin:$PATH
-ENV DB_PATH=/app/data/orders.db
-EXPOSE 8000
-RUN useradd -u 8888 appuser && chown -R appuser:appuser /app
+
+COPY requirements.txt .
+
+RUN pip install --upgrade pip && \
+    pip install --prefix=/install -r requirements.txt
+
+# ---------- Runtime stage ----------
+FROM python:3.10-slim AS runtime
+
+RUN useradd -m appuser
 USER appuser
+
+WORKDIR /app
+
+COPY --from=builder /install /usr/local
+COPY . .
+
+ENV DB_PATH=/app/db/orders.db
+
+EXPOSE 8000
+
+HEALTHCHECK --interval=30s --timeout=5s --retries=3 CMD \
+  wget -qO- http://127.0.0.1:8000/healthz || exit 1
+
 CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
