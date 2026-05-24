@@ -9,7 +9,6 @@ It is deterministic and fast for SQL generation
 
 System Prompt Template
 "You are an expert SQL generator. Convert natural language questions into valid SQLite SQL.
-
 Database schema:
 orders(
     order_id TEXT,
