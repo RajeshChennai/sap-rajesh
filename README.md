@@ -76,7 +76,7 @@ Instruction‑tuned
 
 Deterministic and fast for SQL generation
 
-System Prompt Template
+**System Prompt Template**
 Code
 You are an expert SQL generator. Convert natural language questions into valid SQLite SQL.
 
